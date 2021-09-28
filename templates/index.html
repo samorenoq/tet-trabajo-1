@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/main.css') }}"
+    />
+    <title>Home</title>
+  </head>
+  <body>
+    <h1>Subir archivo</h1>
+    <form action="" method="POST" enctype="multipart/form-data">
+      <p>
+        <input type="file" name="file" />
+        <button type="submit">Submit</button>
+      </p>
+    </form>
+
+    <h1>Archivos</h1>
+    <table>
+      {% for file in files %}
+      <tr align="left">
+        <td>{{file}}</td>
+        <td>
+          <a href="/download/{{file}}" target="blank">
+            <img
+              src="https://img.icons8.com/material-rounded/24/000000/download--v1.png"
+            />
+          </a>
+        </td>
+        <td>
+          <img
+            src="https://img.icons8.com/material-sharp/24/000000/filled-trash.png"
+          />
+        </td>
+      </tr>
+      {% endfor %}
+    </table>
+  </body>
+  <footer>
+    <a href="https://icons8.com/icon/83159/download">Download icon by Icons8</a>
+  </footer>
+</html>
