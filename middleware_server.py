@@ -10,17 +10,23 @@ app = Flask('__name__', template_folder='templates')
 app.config['UPLOAD_FOLDER'] = TEMP_FOLDER
 
 # Cargar el diccionario con los pares (key, value)
-key_value_index = read_index(INDEX_FILE_NAME)
+file_index = read_index(FILE_INDEX_FILE_NAME)
+# Cargar el diccionario con las direcciones de los servidores
+server_index = read_index(SERVER_INDEX_FILE_NAME)
 
 # Lista de archivos disponibles
-files = list_files(key_value_index)
+files = list_files(file_index)
 
 # Ruta para la interfaz inicial
+
+
 @app.route('/')
 def upload_form():
     return render_template('index.html', **globals())
 
 # Ruta para carga de archivos
+
+
 @app.route('/', methods=['POST'])
 def upload_file():
     if request.method == 'POST':
@@ -36,29 +42,38 @@ def upload_file():
             return redirect(request.url)
         else:
             # Verificar que el archivo no exista
-            if filename in key_value_index:
+            if filename in file_index:
                 print('Error: el nombre del archivo ya existe')
                 return redirect('/')
             else:
                 # Crear un nombre de archivo compatible con el servidor
                 server_file_name = secure_filename(filename)
                 # Guardar un registro del archivo en el index de key, value
-                key_value_index[filename] = {'serverName': server_file_name}
-                # Actualizar el índice y la lista de archivos
-                update_index()
+                file_index[filename] = {'serverFileName': server_file_name}
                 # Guardar el achivo temporalmente en el servidor
                 file.save(os.path.join(TEMP_FOLDER, server_file_name))
+                # Separar el archivo en distintas partes
+                split_file(os.path.join(TEMP_FOLDER, server_file_name), NUM_PARTS)
+                # Agregar los nombres de las partes al índice, en el key del archivo
+                file_index[filename]['serverAssignment'] = assign_server(NUM_PARTS,
+                                                                len(server_index),
+                                                                REPLICATION_FACTOR)
+                # Actualizar el índice y la lista de archivos
+                update_index()
         return redirect('/')
 
 # Ruta para descarga de archivos
+
+
 @app.route('/download/<filename>', methods=['GET'])
 def download_file(filename):
     path = os.path.join(TEMP_FOLDER, filename)
     return send_file(path, as_attachment=True, attachment_filename='')
 
-import json
 
 # Ruta para eliminar un archivo
+
+
 @app.route('/delete', methods=['DELETE'])
 def delete_file():
     # Obtener el cuerpo de la petición
@@ -66,24 +81,26 @@ def delete_file():
     filename = body['fileName']
     server_file_name = secure_filename(filename)
     # Verificar si el archivo sí existe
-    if filename in key_value_index:
+    if filename in file_index:
         path = os.path.join(TEMP_FOLDER, server_file_name)
         os.remove(path)
         # TODO: borrar el archivo los servidores, no sólo del índice
         # Quitar el archivo del índice
-        del key_value_index[filename]
+        del file_index[filename]
         update_index()
     else:
         print('Error: el archivo no existe')
 
-    return json.dumps({'success':True}), 200, {'ContentType':'application/json'} 
+    return json.dumps({'success': True}), 200, {'ContentType': 'application/json'}
 
 # Función para actualizar el índice y la lista ante cambios
+
+
 def update_index() -> None:
-    global key_value_index, files
-    write_index(key_value_index, INDEX_FILE_NAME)
-    key_value_index = read_index(INDEX_FILE_NAME)
-    files = list_files(key_value_index)
+    global file_index, files
+    write_index(file_index, FILE_INDEX_FILE_NAME)
+    file_index = read_index(FILE_INDEX_FILE_NAME)
+    files = list_files(file_index)
 
     return None
 
