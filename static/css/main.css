@@ -4,5 +4,9 @@ footer {
 }
 
 td {
-    width: 500px;
+    max-width: 30vw;
+}
+
+.filename-col {
+    min-width: 15vw;
 }
