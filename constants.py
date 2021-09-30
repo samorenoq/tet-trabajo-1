@@ -4,3 +4,4 @@ TEMP_FOLDER = 'temp_files'
 HOST = 'localhost'
 NUM_PARTS = 4
 REPLICATION_FACTOR = 2
+ENCODING = 'utf-8'

@@ -53,14 +53,22 @@ def upload_file():
                 # Guardar el achivo temporalmente en el servidor
                 file.save(os.path.join(TEMP_FOLDER, server_file_name))
                 # Separar el archivo en distintas partes
-                split_file(os.path.join(
-                    TEMP_FOLDER, server_file_name), NUM_PARTS)
+                chunks = split_file(os.path.join(TEMP_FOLDER, server_file_name),
+                                                      NUM_PARTS)
                 # Agregar los nombres de las partes al índice, en el key del archivo
                 file_index[filename]['serverAssignment'] = assign_server(NUM_PARTS,
                                                                          len(server_index),
                                                                          REPLICATION_FACTOR)
                 # Actualizar el índice y la lista de archivos
                 update_index()
+
+                # Enviar las partes a los servidores correspondientes
+                send_parts_to_servers(file_index[filename],
+                                      chunks,
+                                      server_index)
+
+                # Eliminar las partes de la carpeta de archivos temporales
+
         return redirect('/')
 
 # Ruta para descarga de archivos
@@ -85,7 +93,6 @@ def delete_file():
     if filename in file_index:
         path = os.path.join(TEMP_FOLDER, server_file_name)
         os.remove(path)
-        # TODO: borrar el archivo los servidores, no sólo del índice
         # Quitar el archivo del índice
         del file_index[filename]
         update_index()

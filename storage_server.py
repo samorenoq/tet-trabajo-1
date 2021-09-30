@@ -2,25 +2,49 @@
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 #Importar librería para leer argumentos de consola
 import sys
+from constants import ENCODING
+from functions import write_bytes_to_file
+import json
+import os
 
+# Fábrica para gestores de peticiones
+def createHandler(storage_folder: str) -> BaseHTTPRequestHandler:
 # Clase para gestionar peticiones
-class RequestHandler(BaseHTTPRequestHandler):
-    def __init__(self, ip_addr, port, storage_folder):
-        self.ip_addr = ip_addr
-        self.port = port
-
-    def do_POST(self):
-        content_length = int(self.headers('Content-Length'))
-        body = self.rfile.read(content_length)
-        print(body)
+    class RequestHandler(BaseHTTPRequestHandler):
+        def __init__(self, *args, **kwargs):
+            self.storage_folder = storage_folder
+            super(RequestHandler, self).__init__(*args, **kwargs)
+        def do_POST(self):
+            content_length = int(self.headers['Content-Length'])
+            data = self.rfile.read(content_length)
+            # Convertir el cuerpo de la petición a diccionario de python
+            #body = json.loads(body)
+            # Extraer el nombre del archivo
+            filename = self.headers['serverFileName']
+            # Extraer el id de la parte del archivo a la que los datos corresponden
+            part_id = self.headers['partId']
+            # Extraer los datos a escribir
+            #data = body['data']
+            # Nombre del fragmento de archivo
+            file_part_name = f'{filename}_{part_id}.part'
+            # Ruta en la que se guardará la parte del archivo
+            file_path = os.path.join(self.storage_folder, file_part_name)
+            write_bytes_to_file(data, file_path)
+            # Enviar respuesta
+            self.send_response(200)
+            # Importante para decirle al cliente que terminó la petición
+            self.end_headers()
+        
+        def do_DELETE(self):
+            pass
     
-    def do_DELETE(self):
-        pass
+    return RequestHandler
 
 # Función para crear una nueva instancia de servidor
 def start_server(ip_addr: str, port: int, storage_folder: str) -> None:
+    handler = createHandler(storage_folder)
     # Crear servidor que escuche peticiones
-    with ThreadingHTTPServer((ip_addr, port), RequestHandler) as httpd:
+    with ThreadingHTTPServer((ip_addr, port), handler) as httpd:
         print(f'Starting server on {ip_addr}:{port}')
         httpd.serve_forever()
 

@@ -2,6 +2,10 @@ import json
 import random
 import math
 from collections import OrderedDict
+import os
+import requests
+import time
+from constants import ENCODING
 
 # Función para leer el índice (key, value)
 
@@ -30,7 +34,7 @@ def list_files(index: dict) -> list:
 # Función para separar un archivo en un número específico de pedazos
 
 
-def split_file(file_name: str, num_chunks: int = 3) -> None:
+def split_file(file_name: str, num_chunks: int = 3) -> dict:
     # Abrir el archivo
     with open(file_name, 'rb') as file:
         file_content = file.read()  # Leer archivo
@@ -43,17 +47,12 @@ def split_file(file_name: str, num_chunks: int = 3) -> None:
         # Apuntador al último byte que se toma para esta parte del archivo
         end_of_chunk = size_of_chunk + current_chunk
         # Tomar una parte del archivo
-        chunks[i] = file_content[current_chunk:end_of_chunk]
+        chunks[str(i)] = file_content[current_chunk:end_of_chunk]
         current_chunk += size_of_chunk  # Mover el apuntador al inicio de la siguiente parte
     # Agregar la última parte del archivo (que puede no tener el mismo tamaño que las demás)
-    chunks[num_chunks-1] = file_content[current_chunk:]
-    # Escribir cada parte en un archivo distinto
-    for index, chunk in chunks.items():
-        # Nombre del archivo para cada parte
-        filename = f'{file_name}_{index}.part'
-        with open(filename, 'wb') as f:
-            f.write(chunk)
-    return None
+    chunks[str(num_chunks-1)] = file_content[current_chunk:]
+
+    return chunks
 
 # Función para asignar aleatoriamente el servidor al que irá cada parte y un factor de replicación
 
@@ -106,5 +105,42 @@ def join_file(chunks: dict, file_name: str) -> None:
     # Escribir la información completa a un archivo
     with open(file_name, 'wb') as f:
         f.write(file_content)
+
+    return None
+
+# Función para enviar una parte específica a un servidor específico
+
+
+def send_file_part(filename: str, part_id: str, file_part: bytes, server_address: str) -> None:
+    headers = {
+        'serverFileName': filename,
+        'partId': part_id,
+    }
+    requests.post(server_address, data=file_part, headers=headers)
+    
+    return None
+
+# Función para enviar cada parte a su servidor correspondiente por HTTP
+
+
+def send_parts_to_servers(current_file_index: dict,
+                          chunks: dict,
+                          server_index: dict) -> None:
+    filename = current_file_index['serverFileName']
+    # Recorrer las partes
+    for part_id, server_ids in current_file_index['serverAssignment'].items():
+        # Enviar la parte a sus servidores correspondientes
+        for server_id in server_ids:
+            send_file_part(filename,
+                           part_id,
+                           chunks[part_id],
+                           server_index[str(server_id)])
+
+    return None
+
+# Función para escribir bytes en un archivo
+def write_bytes_to_file(data: bytes, path: str) -> None:
+    with open(path, 'wb') as f:
+        f.write(data)
 
     return None

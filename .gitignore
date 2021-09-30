@@ -1,7 +1,9 @@
 *.docx
 *.pdf
 *.ipynb
+*.part
+
 /env
 /__pycache__
 /.ipynb_checkpoints
-*.part
+/stored_files
