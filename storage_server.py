@@ -15,25 +15,26 @@ def createHandler(storage_folder: str) -> BaseHTTPRequestHandler:
             self.storage_folder = storage_folder
             super(RequestHandler, self).__init__(*args, **kwargs)
         def do_POST(self):
-            content_length = int(self.headers['Content-Length'])
-            data = self.rfile.read(content_length)
-            # Convertir el cuerpo de la petición a diccionario de python
-            #body = json.loads(body)
-            # Extraer el nombre del archivo
-            filename = self.headers['serverFileName']
-            # Extraer el id de la parte del archivo a la que los datos corresponden
-            part_id = self.headers['partId']
-            # Extraer los datos a escribir
-            #data = body['data']
-            # Nombre del fragmento de archivo
-            file_part_name = f'{filename}_{part_id}.part'
-            # Ruta en la que se guardará la parte del archivo
-            file_path = os.path.join(self.storage_folder, file_part_name)
-            write_bytes_to_file(data, file_path)
-            # Enviar respuesta
-            self.send_response(200)
-            # Importante para decirle al cliente que terminó la petición
-            self.end_headers()
+            # Si la petición fue para subir archivo
+            if 'serverFileName' in self.headers.keys():
+                content_length = int(self.headers['Content-Length'])
+                data = self.rfile.read(content_length)
+                # Extraer el nombre del archivo
+                filename = self.headers['serverFileName']
+                # Extraer el id de la parte del archivo a la que los datos corresponden
+                part_id = self.headers['partId']
+                # Nombre del fragmento de archivo
+                file_part_name = f'{filename}_{part_id}.part'
+                # Ruta en la que se guardará la parte del archivo
+                file_path = os.path.join(self.storage_folder, file_part_name)
+                write_bytes_to_file(data, file_path)
+                # Enviar respuesta
+                self.send_response(200)
+                # Importante para decirle al cliente que terminó la petición
+                self.end_headers()
+            #Si la petición fue para bajar archivo
+            else:
+                pass
         
         def do_DELETE(self):
             pass

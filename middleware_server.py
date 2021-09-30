@@ -67,7 +67,8 @@ def upload_file():
                                       chunks,
                                       server_index)
 
-                # Eliminar las partes de la carpeta de archivos temporales
+                # Eliminar el archivo de los archivos temporales
+                os.remove(os.path.join(TEMP_FOLDER, server_file_name))
 
         return redirect('/')
 
@@ -91,8 +92,6 @@ def delete_file():
     server_file_name = secure_filename(filename)
     # Verificar si el archivo sí existe
     if filename in file_index:
-        path = os.path.join(TEMP_FOLDER, server_file_name)
-        os.remove(path)
         # Quitar el archivo del índice
         del file_index[filename]
         update_index()

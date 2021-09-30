@@ -93,7 +93,6 @@ def assign_server(num_chunks: int, num_servers: int, replication_factor: int) ->
 
     return server_assignment
 
-
 # Función para tomar las partes de un archivo y juntarlas
 def join_file(chunks: dict, file_name: str) -> None:
     file_content = b''
@@ -117,7 +116,7 @@ def send_file_part(filename: str, part_id: str, file_part: bytes, server_address
         'partId': part_id,
     }
     requests.post(server_address, data=file_part, headers=headers)
-    
+
     return None
 
 # Función para enviar cada parte a su servidor correspondiente por HTTP
@@ -138,7 +137,46 @@ def send_parts_to_servers(current_file_index: dict,
 
     return None
 
+# Función para pedir una parte de un archivo a un servidor
+def request_file_part(file_part_name: str, server_address: str) -> bytes:
+    request_body = {
+        'filePartName': file_part_name
+    }
+    requests.post(server_address, json=request_body)
+
+# Función para pedir a los servidores las partes de los archivos
+def request_parts_from_servers(filename: str,
+                               file_index: dict,
+                               server_index: dict) -> dict:
+    
+    chunks = {}
+    
+    current_file_index = file_index[filename]
+    server_file_name = current_file_index['serverFileName']
+    server_assignment = current_file_index['serverAssignment']
+
+    # Para cada parte, hacer la petición al servidor que la tiene
+    for part_id, server_ids in server_assignment.items():
+        part_name = f'{server_file_name}_{part_id}.part'
+        # Intentar con cada servidor que tiene el archivo
+        for server_id in server_ids:
+            # Extraer la dirección del servidor
+            server_address = server_index[server_id]
+            chunk = request_file_part(part_name, server_address)
+            # Si la petición retornó el archivo, salir
+            if chunk is not None:
+                chunks[part_id] = chunk
+                break
+        # Si el archivo no fue encontrado
+        else:
+            return None
+    
+    return chunks
+    
+
 # Función para escribir bytes en un archivo
+
+
 def write_bytes_to_file(data: bytes, path: str) -> None:
     with open(path, 'wb') as f:
         f.write(data)
