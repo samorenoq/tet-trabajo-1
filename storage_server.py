@@ -58,9 +58,6 @@ def createHandler(storage_folder: str) -> BaseHTTPRequestHandler:
                     with open(file_part_path, 'rb') as f:
                         self.wfile.write(f.read())
 
-        def do_DELETE(self):
-            pass
-
     return RequestHandler
 
 # Función para crear una nueva instancia de servidor
