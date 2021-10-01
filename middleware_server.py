@@ -1,4 +1,4 @@
-from flask import Flask, request, redirect, send_file, render_template, flash
+from flask import Flask, request, redirect, send_file, render_template, flash, after_this_request
 from werkzeug.utils import secure_filename
 import os
 import json
@@ -7,7 +7,7 @@ from constants import *
 
 app = Flask('__name__', template_folder='templates')
 
-app.config['UPLOAD_FOLDER'] = TEMP_FOLDER
+app.config['UPLOAD_FOLDER'] = TEMP_UPLOADS_FOLDER
 
 # Cargar el diccionario con los pares (key, value)
 file_index = read_index(FILE_INDEX_FILE_NAME)
@@ -51,10 +51,10 @@ def upload_file():
                 # Guardar un registro del archivo en el index de key, value
                 file_index[filename] = {'serverFileName': server_file_name}
                 # Guardar el achivo temporalmente en el servidor
-                file.save(os.path.join(TEMP_FOLDER, server_file_name))
+                file.save(os.path.join(TEMP_UPLOADS_FOLDER, server_file_name))
                 # Separar el archivo en distintas partes
-                chunks = split_file(os.path.join(TEMP_FOLDER, server_file_name),
-                                                      NUM_PARTS)
+                chunks = split_file(os.path.join(TEMP_UPLOADS_FOLDER, server_file_name),
+                                    NUM_PARTS)
                 # Agregar los nombres de las partes al índice, en el key del archivo
                 file_index[filename]['serverAssignment'] = assign_server(NUM_PARTS,
                                                                          len(server_index),
@@ -68,7 +68,7 @@ def upload_file():
                                       server_index)
 
                 # Eliminar el archivo de los archivos temporales
-                os.remove(os.path.join(TEMP_FOLDER, server_file_name))
+                os.remove(os.path.join(TEMP_UPLOADS_FOLDER, server_file_name))
 
         return redirect('/')
 
@@ -77,8 +77,18 @@ def upload_file():
 
 @app.route('/download/<filename>', methods=['GET'])
 def download_file(filename):
-    path = os.path.join(TEMP_FOLDER, filename)
-    return send_file(path, as_attachment=True, attachment_filename='')
+    destination_path = request_parts_from_servers(
+        filename, file_index, server_index)
+
+    # Borrar el archivo después de enviárselo al usuario
+    @after_this_request
+    def delete_temp_file(response):
+        try:
+            os.remove(destination_path)
+        except:
+            pass
+        return response
+    return send_file(destination_path, as_attachment=True, attachment_filename='')
 
 
 # Ruta para eliminar un archivo

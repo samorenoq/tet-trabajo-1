@@ -5,7 +5,7 @@ from collections import OrderedDict
 import os
 import requests
 import time
-from constants import ENCODING
+from constants import ENCODING, TEMP_DOWNLOADS_FOLDER
 
 # Función para leer el índice (key, value)
 
@@ -94,6 +94,8 @@ def assign_server(num_chunks: int, num_servers: int, replication_factor: int) ->
     return server_assignment
 
 # Función para tomar las partes de un archivo y juntarlas
+
+
 def join_file(chunks: dict, file_name: str) -> None:
     file_content = b''
 
@@ -138,19 +140,33 @@ def send_parts_to_servers(current_file_index: dict,
     return None
 
 # Función para pedir una parte de un archivo a un servidor
+
+
 def request_file_part(file_part_name: str, server_address: str) -> bytes:
     request_body = {
         'filePartName': file_part_name
     }
-    requests.post(server_address, json=request_body)
+
+    headers = {'Accept': '*/*'}
+    # Intentar hacer la petición
+    try:
+        response = requests.post(
+            server_address, json=request_body, headers=headers)
+    except:
+        return None
+
+    # Si no hubo error, la petición fue exitosa
+    return response.content
 
 # Función para pedir a los servidores las partes de los archivos
+
+
 def request_parts_from_servers(filename: str,
                                file_index: dict,
-                               server_index: dict) -> dict:
-    
+                               server_index: dict) -> str:
+
     chunks = {}
-    
+
     current_file_index = file_index[filename]
     server_file_name = current_file_index['serverFileName']
     server_assignment = current_file_index['serverAssignment']
@@ -161,7 +177,7 @@ def request_parts_from_servers(filename: str,
         # Intentar con cada servidor que tiene el archivo
         for server_id in server_ids:
             # Extraer la dirección del servidor
-            server_address = server_index[server_id]
+            server_address = server_index[str(server_id)]
             chunk = request_file_part(part_name, server_address)
             # Si la petición retornó el archivo, salir
             if chunk is not None:
@@ -169,10 +185,14 @@ def request_parts_from_servers(filename: str,
                 break
         # Si el archivo no fue encontrado
         else:
-            return None
-    
-    return chunks
-    
+            print('Error: Archivo no encontrado!')
+
+    # Juntar las partes del archivo y escribirlo
+    destination_path = os.path.join(TEMP_DOWNLOADS_FOLDER, filename)
+    join_file(chunks, destination_path)
+
+    return destination_path
+
 
 # Función para escribir bytes en un archivo
 
