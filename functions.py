@@ -142,16 +142,15 @@ def send_parts_to_servers(current_file_index: dict,
 # Función para pedir una parte de un archivo a un servidor
 
 
-def request_file_part(file_part_name: str, server_address: str) -> bytes:
+def request_file_part(file_part_name: str, server_address: str, deleteFile: bool = False) -> bytes:
     request_body = {
-        'filePartName': file_part_name
+        'filePartName': file_part_name,
+        'deleteFile': deleteFile
     }
-
-    headers = {'Accept': '*/*'}
     # Intentar hacer la petición
     try:
         response = requests.post(
-            server_address, json=request_body, headers=headers)
+            server_address, json=request_body)
     except:
         return None
 
@@ -163,7 +162,8 @@ def request_file_part(file_part_name: str, server_address: str) -> bytes:
 
 def request_parts_from_servers(filename: str,
                                file_index: dict,
-                               server_index: dict) -> str:
+                               server_index: dict,
+                               deleteFile: bool = False) -> str:
 
     chunks = {}
 
@@ -178,9 +178,9 @@ def request_parts_from_servers(filename: str,
         for server_id in server_ids:
             # Extraer la dirección del servidor
             server_address = server_index[str(server_id)]
-            chunk = request_file_part(part_name, server_address)
-            # Si la petición retornó el archivo, salir
-            if chunk is not None:
+            chunk = request_file_part(part_name, server_address, deleteFile)
+            # Si la petición retornó el archivo (y no se quiere eliminar), salir
+            if chunk is not None and not deleteFile:
                 chunks[part_id] = chunk
                 break
         # Si el archivo no fue encontrado

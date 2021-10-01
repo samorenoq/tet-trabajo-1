@@ -41,15 +41,22 @@ def createHandler(storage_folder: str) -> BaseHTTPRequestHandler:
                 data = json.loads(data)
                 file_part_path = os.path.join(
                     storage_folder, data['filePartName'])
+                # Revisar si el cliente está pidiendo o borrando el archivo
+                if data['deleteFile']:
+                    self.send_response(200)
+                    self.end_headers()
 
-                # Enviar respuesta
-                self.send_response(200)
-                # Importante para decirle al cliente que terminó la petición
-                self.end_headers()
+                    # Borrar la parte
+                    os.remove(file_part_path)
+                else:
+                    # Enviar respuesta
+                    self.send_response(200)
+                    # Importante para decirle al cliente que terminó la petición
+                    self.end_headers()
 
-                # Abrir el archivo y enviar los bytes
-                with open(file_part_path, 'rb') as f:
-                    self.wfile.write(f.read())
+                    # Abrir el archivo y enviar los bytes
+                    with open(file_part_path, 'rb') as f:
+                        self.wfile.write(f.read())
 
         def do_DELETE(self):
             pass

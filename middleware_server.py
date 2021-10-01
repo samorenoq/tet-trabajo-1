@@ -99,7 +99,8 @@ def delete_file():
     # Obtener el cuerpo de la petición
     body = json.loads(request.data)
     filename = body['fileName']
-    server_file_name = secure_filename(filename)
+    # Eliminar todas las partes y sus réplicas de los servidores
+    request_parts_from_servers(filename, file_index, server_index, True)
     # Verificar si el archivo sí existe
     if filename in file_index:
         # Quitar el archivo del índice
