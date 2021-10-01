@@ -2,6 +2,7 @@ from flask import Flask, request, redirect, send_file, render_template, flash, a
 from werkzeug.utils import secure_filename
 import os
 import json
+import sys
 from functions import *
 from constants import *
 
@@ -125,4 +126,4 @@ def update_index() -> None:
 
 # Correr el servidor
 if __name__ == '__main__':
-    app.run(host=HOST)
+    app.run(host=sys.argv[1])
