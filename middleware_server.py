@@ -126,4 +126,4 @@ def update_index() -> None:
 
 # Correr el servidor
 if __name__ == '__main__':
-    app.run(host=sys.argv[1])
+    app.run(host='0.0.0.0')
