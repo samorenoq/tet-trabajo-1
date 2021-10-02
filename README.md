@@ -8,6 +8,16 @@ Para acceder a la aplicación web, ir a la dirección http://ec2-3-84-18-178.com
 ![alt-text](images/client-2.jpg)
 ![alt-text](images/client-3.jpg)
 
+Para correr el servidor middleware: \
+    ```
+    python middleware_server.py
+    ```
+
+Para correr el servidor de almacenamiento:  \
+    ```
+    python storage_server.py <dirección IP> <puerto> <ruta para almacenar las partes>
+    ```
+
 ## Funcionamiento Interno
 El funcionamiento de la aplicación funciona principalmente con un script para el servidor middleware; otro script para el servidor de almacenamiento (que se puede correr en tantos servidores como se requiera); un archivo con constantes; un archivo de funciones, en el que están las funciones con casi toda la lógica de procesamiento; y dos archivos JSON en los que se guardan todos los pares (k, v) necesarios: uno para los archivos y otro para los servidores. A continuación se da una descripción más profunda de cada uno de estos componentes:
 ### middleware_server.py
