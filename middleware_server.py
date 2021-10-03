@@ -32,7 +32,8 @@ def upload_form():
 def upload_file():
     if request.method == 'POST':
         # Borrar los contenidos de los archivos temporales
-        os.remove(os.path.join(TEMP_DOWNLOADS_FOLDER, '*'))
+        for f in os.listdir(TEMP_DOWNLOADS_FOLDER):
+            os.remove(os.path.join(TEMP_DOWNLOADS_FOLDER, f))
         # Revisar que la petición sí contenga un archivo
         if 'file' not in request.files:
             print('Error: no se escogió ningún archivo')

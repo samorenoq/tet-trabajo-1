@@ -117,7 +117,11 @@ def send_file_part(filename: str, part_id: str, file_part: bytes, server_address
         'serverFileName': filename,
         'partId': part_id,
     }
-    requests.post(server_address, data=file_part, headers=headers)
+    # Tratar de enviar el archivo
+    try:
+        requests.post(server_address, data=file_part, headers=headers)
+    except:
+        pass
 
     return None
 
